@@ -67,7 +67,8 @@ public class Tag {
   }
 
   public void addTagAttribute(TagAttribute attribute) {
-    attributes.put(attribute.getName(), attribute);
+    if(!attributes.containsKey(attribute.getName()))
+      attributes.put(attribute.getName(), attribute);
   }
 
   public Collection<TagAttribute> getAttributes() {

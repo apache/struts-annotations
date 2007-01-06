@@ -19,8 +19,12 @@
  * under the License.
  */
 package org.apache.struts.annotations.taglib.apt;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -48,6 +52,10 @@ import com.sun.mirror.declaration.AnnotationValue;
 import com.sun.mirror.declaration.Declaration;
 import com.sun.mirror.declaration.MethodDeclaration;
 import com.sun.mirror.declaration.TypeDeclaration;
+
+import freemarker.template.Configuration;
+import freemarker.template.DefaultObjectWrapper;
+import freemarker.template.Template;
 
 public class TagAnnotationProcessor implements AnnotationProcessor {
   public static final String TAG = "org.apache.struts.annotations.StrutsTag";
@@ -107,10 +115,10 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
         String methodName = methodDeclaration.getSimpleName();
         name = String.valueOf(Character.toLowerCase(methodName.charAt(3))) + methodName.substring(4);
       }
-      methodDeclaration.getSimpleName();
       attribute.setName(name);
       attribute.setRequired((Boolean) values.get("required"));
       attribute.setRtexprvalue((Boolean) values.get("rtexprvalue"));
+      attribute.setDefaultValue((String) values.get("defaultValue"));
       // add to map
       Tag parentTag = tags.get(typeName);
       if(parentTag != null)
@@ -131,8 +139,10 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
     for(Map.Entry<String, Tag> entry : tags.entrySet()) {
       processHierarchy(entry.getValue());
     }
-    // save as xml
-    save();
+
+    //save
+    saveAsXml();
+    saveTemplates();
   }
 
   private void processHierarchy(Tag tag) {
@@ -165,9 +175,45 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
       throw new IllegalArgumentException("'displayName' is missing");
     if(getOption("uri") == null)
       throw new IllegalArgumentException("'uri' is missing");
+    if(getOption("outTemplatesDir") == null)
+      throw new IllegalArgumentException("'outTemplatesDir' is missing");
+    if(getOption("outFile") == null)
+	      throw new IllegalArgumentException("'outFile' is missing");
   }
 
-  private void save() {
+  private void saveTemplates() {
+      //freemarker configuration
+      Configuration config = new Configuration();
+      config.setClassForTemplateLoading(getClass(), "");
+      config.setObjectWrapper(new DefaultObjectWrapper());
+
+      try {
+        //load template
+        Template template = config.getTemplate("tag.ftl");
+        String rootDir = (new File(getOption("outTemplatesDir"))).getAbsolutePath();
+        for(Tag tag : tags.values()) {
+            if(tag.isInclude()) {
+                //model
+                HashMap root = new HashMap();
+                root.put("tag", tag);
+
+                //save file
+                BufferedWriter writer = new BufferedWriter(new FileWriter(new File(rootDir, tag.getName() + ".html")));
+                try {
+                    template.process(root, writer);
+                } finally {
+                    writer.close();
+                }
+            }
+        }
+      } catch (Exception e) {
+        //oops we cannot throw checked exceptions
+        throw new RuntimeException(e);
+      }
+  }
+
+
+  private void saveAsXml() {
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     DocumentBuilder builder;
 
@@ -208,7 +254,7 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
       transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
 
       Source source = new DOMSource(document);
-      Result result = new StreamResult(new OutputStreamWriter(new FileOutputStream(getOption("out"))));
+      Result result = new StreamResult(new OutputStreamWriter(new FileOutputStream(getOption("outFile"))));
       transformer.transform(source, result);
     } catch (Exception e) {
       // oops we cannot throw checked exceptions
@@ -225,8 +271,9 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
 
     for (Map.Entry<String, String> entry : environment.getOptions().entrySet()) {
       String key = entry.getKey();
-      if (key.startsWith("-A" + name))
-        return key.substring(key.indexOf("=") + 1);
+      String[] splitted = key.split("=");
+      if (splitted[0].equals("-A" + name))
+        return splitted[1];
     }
     return null;
   }
@@ -278,22 +325,28 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
     HashMap<String, Object> values = new HashMap<String, Object>();
     Collection<AnnotationMirror> annotations = declaration.getAnnotationMirrors();
     // iterate over the mirrors.
+
     for (AnnotationMirror mirror : annotations) {
       // if the mirror in this iteration is for our note declaration...
       if (mirror.getAnnotationType().getDeclaration().equals(type)) {
-
-        // print out the goodies.
-        Map<AnnotationTypeElementDeclaration, AnnotationValue> annotationValues = mirror
-            .getElementValues();
-
-        for (Map.Entry<AnnotationTypeElementDeclaration, AnnotationValue> entry : annotationValues
-            .entrySet()) {
-          AnnotationTypeElementDeclaration key = entry.getKey();
-          AnnotationValue value = entry.getValue();
-          values.put(key.getSimpleName(), value.getValue());
+        for(AnnotationTypeElementDeclaration annotationType : mirror.getElementValues().keySet()) {
+          Object value = mirror.getElementValues().get(annotationType).getValue();
+          Object defaultValue = annotationType.getDefaultValue();
+          values.put(annotationType.getSimpleName(), value != null ? value : defaultValue);
         }
       }
     }
+
+    //find default values...painful
+    for(AnnotationTypeElementDeclaration annotationType : type.getMethods()) {
+        AnnotationValue value = annotationType.getDefaultValue();
+        if(value != null) {
+            String name = annotationType.getSimpleName();
+            if(!values.containsKey(name))
+                values.put(name, value.getValue());
+        }
+    }
+
     return values;
   }
 }

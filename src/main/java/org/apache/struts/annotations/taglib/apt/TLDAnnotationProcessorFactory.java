@@ -18,7 +18,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
- 
+
 package org.apache.struts.annotations.taglib.apt;
 
 import java.util.Arrays;
@@ -71,6 +71,7 @@ public class TLDAnnotationProcessorFactory implements AnnotationProcessorFactory
         "-AshortName",
         "-Auri",
         "-Adescription",
-        "-AdisplayName");
+        "-AdisplayName",
+        "-outTemplatesDir");
   }
 }

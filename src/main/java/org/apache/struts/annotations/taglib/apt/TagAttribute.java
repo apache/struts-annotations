@@ -25,11 +25,12 @@ package org.apache.struts.annotations.taglib.apt;
  * Used to hold tag attribute information for TLD generation
  *
  */
-class TagAttribute {
+public class TagAttribute {
   private String name;
   private boolean required;
   private boolean rtexprvalue;
   private String description;
+  private String defaultValue;
 
   public String getDescription() {
     return description;
@@ -61,5 +62,13 @@ class TagAttribute {
 
   public void setRtexprvalue(boolean rtexprvalue) {
     this.rtexprvalue = rtexprvalue;
+  }
+
+  public String getDefaultValue() {
+    return defaultValue;
+  }
+
+  public void setDefaultValue(String defaultValue) {
+    this.defaultValue = defaultValue;
   }
 }
