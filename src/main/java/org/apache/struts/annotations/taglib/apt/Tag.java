@@ -25,69 +25,68 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Tag {
-  private String name;
-  private String tldBodyContent;
-  private String tldTagClass;
-  private String description;
-  private boolean include = true;
-  private String declaredType;
+    private String name;
+    private String tldBodyContent;
+    private String tldTagClass;
+    private String description;
+    private boolean include = true;
+    private String declaredType;
+    private Map<String, TagAttribute> attributes = new HashMap<String, TagAttribute>();
 
-  private Map<String, TagAttribute> attributes = new HashMap<String, TagAttribute>();
+    public String getDescription() {
+        return description;
+    }
 
-  public String getDescription() {
-    return description;
-  }
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-  public void setDescription(String description) {
-    this.description = description;
-  }
+    public String getName() {
+        return name;
+    }
 
-  public String getName() {
-    return name;
-  }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-  public void setName(String name) {
-    this.name = name;
-  }
+    public String getTldBodyContent() {
+        return tldBodyContent;
+    }
 
-  public String getTldBodyContent() {
-    return tldBodyContent;
-  }
+    public void setTldBodyContent(String tldBodyContent) {
+        this.tldBodyContent = tldBodyContent;
+    }
 
-  public void setTldBodyContent(String tldBodyContent) {
-    this.tldBodyContent = tldBodyContent;
-  }
+    public String getTldTagClass() {
+        return tldTagClass;
+    }
 
-  public String getTldTagClass() {
-    return tldTagClass;
-  }
+    public void setTldTagClass(String tldTagClass) {
+        this.tldTagClass = tldTagClass;
+    }
 
-  public void setTldTagClass(String tldTagClass) {
-    this.tldTagClass = tldTagClass;
-  }
+    public void addTagAttribute(TagAttribute attribute) {
+        if (!attributes.containsKey(attribute.getName()))
+            attributes.put(attribute.getName(), attribute);
+    }
 
-  public void addTagAttribute(TagAttribute attribute) {
-    if(!attributes.containsKey(attribute.getName()))
-      attributes.put(attribute.getName(), attribute);
-  }
+    public Collection<TagAttribute> getAttributes() {
+        return attributes.values();
+    }
 
-  public Collection<TagAttribute> getAttributes() {
-    return attributes.values();
-  }
+    public boolean isInclude() {
+        return include;
+    }
 
-  public boolean isInclude() {
-    return include;
-  }
+    public void setInclude(boolean include) {
+        this.include = include;
+    }
 
-  public void setInclude(boolean include) {
-    this.include = include;
-  }
+    public String getDeclaredType() {
+        return declaredType;
+    }
 
-  public String getDeclaredType() {
-    return declaredType;
-  }
-
-  public void setDeclaredType(String declaredType) {
-    this.declaredType = declaredType;
-  }
+    public void setDeclaredType(String declaredType) {
+        this.declaredType = declaredType;
+    }
 }

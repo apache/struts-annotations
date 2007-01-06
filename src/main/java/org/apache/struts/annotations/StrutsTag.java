@@ -26,11 +26,17 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * An annotation to document a Struts jsp/freemarker/velocity tag
+ */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.SOURCE)
 public @interface StrutsTag {
-  String name();
-  String tldBodyContent() default "JSP";
-  String tldTagClass();
-  String description();
+    String name();
+
+    String tldBodyContent() default "JSP";
+
+    String tldTagClass();
+
+    String description();
 }

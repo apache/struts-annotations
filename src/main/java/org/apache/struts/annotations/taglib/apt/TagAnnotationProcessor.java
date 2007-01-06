@@ -19,6 +19,7 @@
  * under the License.
  */
 package org.apache.struts.annotations.taglib.apt;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -58,295 +59,324 @@ import freemarker.template.DefaultObjectWrapper;
 import freemarker.template.Template;
 
 public class TagAnnotationProcessor implements AnnotationProcessor {
-  public static final String TAG = "org.apache.struts.annotations.StrutsTag";
-  public static final String TAG_ATTRIBUTE = "org.apache.struts.annotations.StrutsTagAttribute";
+    public static final String TAG = "org.apache.struts.annotations.StrutsTag";
+    public static final String TAG_ATTRIBUTE = "org.apache.struts.annotations.StrutsTagAttribute";
 
-  private AnnotationProcessorEnvironment environment;
-  private AnnotationTypeDeclaration tagDeclaration;
-  private AnnotationTypeDeclaration tagAttributeDeclaration;
-  private Map<String, Tag> tags = new HashMap<String, Tag>();
+    private AnnotationProcessorEnvironment environment;
+    private AnnotationTypeDeclaration tagDeclaration;
+    private AnnotationTypeDeclaration tagAttributeDeclaration;
+    private Map<String, Tag> tags = new HashMap<String, Tag>();
 
-  public TagAnnotationProcessor(AnnotationProcessorEnvironment env) {
-    environment = env;
-    tagDeclaration = (AnnotationTypeDeclaration) environment.getTypeDeclaration(TAG);
-    tagAttributeDeclaration = (AnnotationTypeDeclaration) environment
-        .getTypeDeclaration(TAG_ATTRIBUTE);
-  }
-
-  public void process() {
-    //make sure all paramters were set
-    checkOptions();
-
-    // tags
-    Collection<Declaration> tagDeclarations = environment
-        .getDeclarationsAnnotatedWith(tagDeclaration);
-    Collection<Declaration> attributesDeclarations = environment
-        .getDeclarationsAnnotatedWith(tagAttributeDeclaration);
-
-    // find Tags
-    for (Declaration declaration : tagDeclarations) {
-      // type
-      TypeDeclaration typeDeclaration = (TypeDeclaration) declaration;
-      String typeName = typeDeclaration.getQualifiedName();
-      HashMap<String, Object> values = getValues(typeDeclaration, tagDeclaration);
-      // create Tag and apply values found
-      Tag tag = new Tag();
-      tag.setDescription((String) values.get("description"));
-      tag.setName((String) values.get("name"));
-      tag.setTldBodyContent((String) values.get("tldBodyContent"));
-      tag.setTldTagClass((String) values.get("tldTagClass"));
-      tag.setDeclaredType(typeName);
-      // add to map
-      tags.put(typeName, tag);
+    public TagAnnotationProcessor(AnnotationProcessorEnvironment env) {
+        environment = env;
+        tagDeclaration = (AnnotationTypeDeclaration) environment
+                .getTypeDeclaration(TAG);
+        tagAttributeDeclaration = (AnnotationTypeDeclaration) environment
+                .getTypeDeclaration(TAG_ATTRIBUTE);
     }
 
-    // find Tags Attributes
-    for (Declaration declaration : attributesDeclarations) {
-      // type
-      MethodDeclaration methodDeclaration = (MethodDeclaration) declaration;
-      String typeName = methodDeclaration.getDeclaringType().getQualifiedName();
-      HashMap<String, Object> values = getValues(methodDeclaration, tagAttributeDeclaration);
-      // create Attribute and apply values found
-      TagAttribute attribute = new TagAttribute();
-      attribute.setDescription((String) values.get("description"));
-      String name = (String) values.get("name");
-      if(name == null || name.length() == 0) {
-        //get name from method
-        String methodName = methodDeclaration.getSimpleName();
-        name = String.valueOf(Character.toLowerCase(methodName.charAt(3))) + methodName.substring(4);
-      }
-      attribute.setName(name);
-      attribute.setRequired((Boolean) values.get("required"));
-      attribute.setRtexprvalue((Boolean) values.get("rtexprvalue"));
-      attribute.setDefaultValue((String) values.get("defaultValue"));
-      // add to map
-      Tag parentTag = tags.get(typeName);
-      if(parentTag != null)
-        tags.get(typeName).addTagAttribute(attribute);
-      else {
-        //an abstract or base class
-        parentTag = new Tag();
-        parentTag.setDeclaredType(typeName);
-        parentTag.setInclude(false);
-        parentTag.addTagAttribute(attribute);
-        tags.put(typeName, parentTag);
-      }
-    }
+    public void process() {
+        // make sure all paramters were set
+        checkOptions();
 
-    //we can't process the hierarchy on the first pass because
-    //apt does not garantees that the base classes will be processed
-    //before their subclasses
-    for(Map.Entry<String, Tag> entry : tags.entrySet()) {
-      processHierarchy(entry.getValue());
-    }
+        // tags
+        Collection<Declaration> tagDeclarations = environment
+                .getDeclarationsAnnotatedWith(tagDeclaration);
+        Collection<Declaration> attributesDeclarations = environment
+                .getDeclarationsAnnotatedWith(tagAttributeDeclaration);
 
-    //save
-    saveAsXml();
-    saveTemplates();
-  }
-
-  private void processHierarchy(Tag tag) {
-    try {
-      Class clazz = Class.forName(tag.getDeclaredType());
-      while((clazz = clazz.getSuperclass()) != null) {
-        Tag parentTag = tags.get(clazz.getName());
-        //copy parent annotations to this tag
-        if(parentTag != null) {
-          for(TagAttribute attribute : parentTag.getAttributes()) {
-            tag.addTagAttribute(attribute);
-          }
+        // find Tags
+        for (Declaration declaration : tagDeclarations) {
+            // type
+            TypeDeclaration typeDeclaration = (TypeDeclaration) declaration;
+            String typeName = typeDeclaration.getQualifiedName();
+            HashMap<String, Object> values = getValues(typeDeclaration,
+                    tagDeclaration);
+            // create Tag and apply values found
+            Tag tag = new Tag();
+            tag.setDescription((String) values.get("description"));
+            tag.setName((String) values.get("name"));
+            tag.setTldBodyContent((String) values.get("tldBodyContent"));
+            tag.setTldTagClass((String) values.get("tldTagClass"));
+            tag.setDeclaredType(typeName);
+            // add to map
+            tags.put(typeName, tag);
         }
-      }
-    } catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
+
+        // find Tags Attributes
+        for (Declaration declaration : attributesDeclarations) {
+            // type
+            MethodDeclaration methodDeclaration = (MethodDeclaration) declaration;
+            String typeName = methodDeclaration.getDeclaringType()
+                    .getQualifiedName();
+            HashMap<String, Object> values = getValues(methodDeclaration,
+                    tagAttributeDeclaration);
+            // create Attribute and apply values found
+            TagAttribute attribute = new TagAttribute();
+            attribute.setDescription((String) values.get("description"));
+            String name = (String) values.get("name");
+            if (name == null || name.length() == 0) {
+                // get name from method
+                String methodName = methodDeclaration.getSimpleName();
+                name = String.valueOf(Character.toLowerCase(methodName
+                        .charAt(3)))
+                        + methodName.substring(4);
+            }
+            attribute.setName(name);
+            attribute.setRequired((Boolean) values.get("required"));
+            attribute.setRtexprvalue((Boolean) values.get("rtexprvalue"));
+            attribute.setDefaultValue((String) values.get("defaultValue"));
+            // add to map
+            Tag parentTag = tags.get(typeName);
+            if (parentTag != null)
+                tags.get(typeName).addTagAttribute(attribute);
+            else {
+                // an abstract or base class
+                parentTag = new Tag();
+                parentTag.setDeclaredType(typeName);
+                parentTag.setInclude(false);
+                parentTag.addTagAttribute(attribute);
+                tags.put(typeName, parentTag);
+            }
+        }
+
+        // we can't process the hierarchy on the first pass because
+        // apt does not garantees that the base classes will be processed
+        // before their subclasses
+        for (Map.Entry<String, Tag> entry : tags.entrySet()) {
+            processHierarchy(entry.getValue());
+        }
+
+        // save
+        saveAsXml();
+        saveTemplates();
     }
-  }
 
-  private void checkOptions() {
-    if(getOption("tlibVersion") == null)
-      throw new IllegalArgumentException("'tlibVersion' is missing");
-    if(getOption("jspVersion") == null)
-      throw new IllegalArgumentException("'jspVersion' is missing");
-    if(getOption("shortName") == null)
-      throw new IllegalArgumentException("'shortName' is missing");
-    if(getOption("description") == null)
-      throw new IllegalArgumentException("'description' is missing");
-    if(getOption("displayName") == null)
-      throw new IllegalArgumentException("'displayName' is missing");
-    if(getOption("uri") == null)
-      throw new IllegalArgumentException("'uri' is missing");
-    if(getOption("outTemplatesDir") == null)
-      throw new IllegalArgumentException("'outTemplatesDir' is missing");
-    if(getOption("outFile") == null)
-	      throw new IllegalArgumentException("'outFile' is missing");
-  }
+    private void processHierarchy(Tag tag) {
+        try {
+            Class clazz = Class.forName(tag.getDeclaredType());
+            while ((clazz = clazz.getSuperclass()) != null) {
+                Tag parentTag = tags.get(clazz.getName());
+                // copy parent annotations to this tag
+                if (parentTag != null) {
+                    for (TagAttribute attribute : parentTag.getAttributes()) {
+                        tag.addTagAttribute(attribute);
+                    }
+                }
+            }
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-  private void saveTemplates() {
-      //freemarker configuration
-      Configuration config = new Configuration();
-      config.setClassForTemplateLoading(getClass(), "");
-      config.setObjectWrapper(new DefaultObjectWrapper());
+    private void checkOptions() {
+        if (getOption("tlibVersion") == null)
+            throw new IllegalArgumentException("'tlibVersion' is missing");
+        if (getOption("jspVersion") == null)
+            throw new IllegalArgumentException("'jspVersion' is missing");
+        if (getOption("shortName") == null)
+            throw new IllegalArgumentException("'shortName' is missing");
+        if (getOption("description") == null)
+            throw new IllegalArgumentException("'description' is missing");
+        if (getOption("displayName") == null)
+            throw new IllegalArgumentException("'displayName' is missing");
+        if (getOption("uri") == null)
+            throw new IllegalArgumentException("'uri' is missing");
+        if (getOption("outTemplatesDir") == null)
+            throw new IllegalArgumentException("'outTemplatesDir' is missing");
+        if (getOption("outFile") == null)
+            throw new IllegalArgumentException("'outFile' is missing");
+    }
 
-      try {
-        //load template
-        Template template = config.getTemplate("tag.ftl");
-        String rootDir = (new File(getOption("outTemplatesDir"))).getAbsolutePath();
-        for(Tag tag : tags.values()) {
-            if(tag.isInclude()) {
-                //model
-                HashMap root = new HashMap();
-                root.put("tag", tag);
+    private void saveTemplates() {
+        // freemarker configuration
+        Configuration config = new Configuration();
+        config.setClassForTemplateLoading(getClass(), "");
+        config.setObjectWrapper(new DefaultObjectWrapper());
 
-                //save file
-                BufferedWriter writer = new BufferedWriter(new FileWriter(new File(rootDir, tag.getName() + ".html")));
-                try {
-                    template.process(root, writer);
-                } finally {
-                    writer.close();
+        try {
+            // load template
+            Template template = config.getTemplate("tag.ftl");
+            String rootDir = (new File(getOption("outTemplatesDir")))
+                    .getAbsolutePath();
+            for (Tag tag : tags.values()) {
+                if (tag.isInclude()) {
+                    // model
+                    HashMap root = new HashMap();
+                    root.put("tag", tag);
+
+                    // save file
+                    BufferedWriter writer = new BufferedWriter(new FileWriter(
+                            new File(rootDir, tag.getName() + ".html")));
+                    try {
+                        template.process(root, writer);
+                    } finally {
+                        writer.close();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // oops we cannot throw checked exceptions
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void saveAsXml() {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder;
+
+        try {
+            // create xml document
+            builder = factory.newDocumentBuilder();
+            Document document = builder.newDocument();
+            document.setXmlVersion("1.0");
+
+            // taglib
+            Element tagLib = document.createElement("taglib");
+            document.appendChild(tagLib);
+            // tag lib attributes
+            appendTextNode(document, tagLib, "tlib-version",
+                    getOption("tlibVersion"), false);
+            appendTextNode(document, tagLib, "jsp-version",
+                    getOption("jspVersion"), false);
+            appendTextNode(document, tagLib, "short-name",
+                    getOption("shortName"), false);
+            appendTextNode(document, tagLib, "uri", getOption("uri"), false);
+            appendTextNode(document, tagLib, "display-name",
+                    getOption("displayName"), false);
+            appendTextNode(document, tagLib, "description",
+                    getOption("description"), true);
+
+            // create tags
+            for (Map.Entry<String, Tag> entry : tags.entrySet()) {
+                Tag tag = entry.getValue();
+                if (tag.isInclude())
+                    createElement(document, tagLib, tag);
+            }
+
+            // save to file
+            TransformerFactory tf = TransformerFactory.newInstance();
+            tf.setAttribute("indent-number", new Integer(2));
+            Transformer transformer = tf.newTransformer();
+            // if tiger would just format it :(
+            // formatting bug in tiger
+            // (http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6296446)
+
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC,
+                    "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.2//EN");
+            transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM,
+                    "http://java.sun.com/dtd/web-jsptaglibrary_1_2.dtd");
+            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+
+            Source source = new DOMSource(document);
+            Result result = new StreamResult(new OutputStreamWriter(
+                    new FileOutputStream(getOption("outFile"))));
+            transformer.transform(source, result);
+        } catch (Exception e) {
+            // oops we cannot throw checked exceptions
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String getOption(String name) {
+        // there is a bug in the 1.5 apt implementation:
+        // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6258929
+        // this is a hack-around
+        if (environment.getOptions().containsKey(name))
+            return environment.getOptions().get(name);
+
+        for (Map.Entry<String, String> entry : environment.getOptions()
+                .entrySet()) {
+            String key = entry.getKey();
+            String[] splitted = key.split("=");
+            if (splitted[0].equals("-A" + name))
+                return splitted[1];
+        }
+        return null;
+    }
+
+    private void createElement(Document doc, Element tagLibElement, Tag tag) {
+        Element tagElement = doc.createElement("tag");
+        tagLibElement.appendChild(tagElement);
+        appendTextNode(doc, tagElement, "name", tag.getName(), false);
+        appendTextNode(doc, tagElement, "tag-class", tag.getTldTagClass(),
+                false);
+        appendTextNode(doc, tagElement, "body-content",
+                tag.getTldBodyContent(), false);
+        appendTextNode(doc, tagElement, "description", tag.getDescription(),
+                true);
+
+        // save attributes
+        for (TagAttribute attribute : tag.getAttributes()) {
+            createElement(doc, tagElement, attribute);
+        }
+
+    }
+
+    private void createElement(Document doc, Element tagElement,
+            TagAttribute attribute) {
+        Element attributeElement = doc.createElement("attribute");
+        tagElement.appendChild(attributeElement);
+        appendTextNode(doc, attributeElement, "name", attribute.getName(),
+                false);
+        appendTextNode(doc, attributeElement, "required", String
+                .valueOf(attribute.isRequired()), false);
+        appendTextNode(doc, attributeElement, "rtexprvalue", String
+                .valueOf(attribute.isRtexprvalue()), false);
+        appendTextNode(doc, attributeElement, "description", attribute
+                .getDescription(), true);
+    }
+
+    private void appendTextNode(Document doc, Element element, String name,
+            String text, boolean cdata) {
+        Text textNode = cdata ? doc.createCDATASection(text) : doc
+                .createTextNode(text);
+        Element newElement = doc.createElement(name);
+        newElement.appendChild(textNode);
+        element.appendChild(newElement);
+    }
+
+    /**
+     * Get values of annotation
+     * 
+     * @param declaration
+     * @param type
+     *            The type of the annotation
+     * @return name->value map of annotation values
+     */
+    private HashMap<String, Object> getValues(Declaration declaration,
+            AnnotationTypeDeclaration type) {
+        HashMap<String, Object> values = new HashMap<String, Object>();
+        Collection<AnnotationMirror> annotations = declaration
+                .getAnnotationMirrors();
+        // iterate over the mirrors.
+
+        for (AnnotationMirror mirror : annotations) {
+            // if the mirror in this iteration is for our note declaration...
+            if (mirror.getAnnotationType().getDeclaration().equals(type)) {
+                for (AnnotationTypeElementDeclaration annotationType : mirror
+                        .getElementValues().keySet()) {
+                    Object value = mirror.getElementValues()
+                            .get(annotationType).getValue();
+                    Object defaultValue = annotationType.getDefaultValue();
+                    values.put(annotationType.getSimpleName(),
+                            value != null ? value : defaultValue);
                 }
             }
         }
-      } catch (Exception e) {
-        //oops we cannot throw checked exceptions
-        throw new RuntimeException(e);
-      }
-  }
 
-
-  private void saveAsXml() {
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-    DocumentBuilder builder;
-
-    try {
-      // create xml document
-      builder = factory.newDocumentBuilder();
-      Document document = builder.newDocument();
-      document.setXmlVersion("1.0");
-
-      // taglib
-      Element tagLib = document.createElement("taglib");
-      document.appendChild(tagLib);
-      // tag lib attributes
-      appendTextNode(document, tagLib, "tlib-version", getOption("tlibVersion"), false);
-      appendTextNode(document, tagLib, "jsp-version", getOption("jspVersion"), false);
-      appendTextNode(document, tagLib, "short-name", getOption("shortName"), false);
-      appendTextNode(document, tagLib, "uri", getOption("uri"), false);
-      appendTextNode(document, tagLib, "display-name", getOption("displayName"), false);
-      appendTextNode(document, tagLib, "description", getOption("description"), true);
-
-      // create tags
-      for (Map.Entry<String, Tag> entry : tags.entrySet()) {
-        Tag tag = entry.getValue();
-        if(tag.isInclude())
-          createElement(document, tagLib, tag);
-      }
-
-      // save to file
-      TransformerFactory tf = TransformerFactory.newInstance();
-      tf.setAttribute("indent-number", new Integer(2));
-      Transformer transformer = tf.newTransformer();
-      //if tiger would just format it :(
-      //formatting bug in tiger (http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6296446)
-
-      transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-      transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.2//EN");
-      transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, "http://java.sun.com/dtd/web-jsptaglibrary_1_2.dtd");
-      transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-
-      Source source = new DOMSource(document);
-      Result result = new StreamResult(new OutputStreamWriter(new FileOutputStream(getOption("outFile"))));
-      transformer.transform(source, result);
-    } catch (Exception e) {
-      // oops we cannot throw checked exceptions
-      throw new RuntimeException(e);
-    }
-  }
-
-  private String getOption(String name) {
-    // there is a bug in the 1.5 apt implementation:
-    // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6258929
-    // this is a hack-around
-    if (environment.getOptions().containsKey(name))
-      return environment.getOptions().get(name);
-
-    for (Map.Entry<String, String> entry : environment.getOptions().entrySet()) {
-      String key = entry.getKey();
-      String[] splitted = key.split("=");
-      if (splitted[0].equals("-A" + name))
-        return splitted[1];
-    }
-    return null;
-  }
-
-  private void createElement(Document doc, Element tagLibElement, Tag tag) {
-    Element tagElement = doc.createElement("tag");
-    tagLibElement.appendChild(tagElement);
-    appendTextNode(doc, tagElement, "name", tag.getName(), false);
-    appendTextNode(doc, tagElement, "tag-class", tag.getTldTagClass(), false);
-    appendTextNode(doc, tagElement, "body-content", tag.getTldBodyContent(), false);
-    appendTextNode(doc, tagElement, "description", tag.getDescription(), true);
-
-    // save attributes
-    for (TagAttribute attribute : tag.getAttributes()) {
-      createElement(doc, tagElement, attribute);
-    }
-
-  }
-
-  private void createElement(Document doc, Element tagElement, TagAttribute attribute) {
-    Element attributeElement = doc.createElement("attribute");
-    tagElement.appendChild(attributeElement);
-    appendTextNode(doc, attributeElement, "name", attribute.getName(), false);
-    appendTextNode(doc, attributeElement, "required", String.valueOf(attribute.isRequired()), false);
-    appendTextNode(doc,
-        attributeElement,
-        "rtexprvalue",
-        String.valueOf(attribute.isRtexprvalue()),
-        false);
-    appendTextNode(doc, attributeElement, "description", attribute.getDescription(), true);
-  }
-
-  private void appendTextNode(Document doc, Element element, String name, String text, boolean cdata) {
-    Text textNode = cdata ? doc.createCDATASection(text) : doc.createTextNode(text);
-    Element newElement = doc.createElement(name);
-    newElement.appendChild(textNode);
-    element.appendChild(newElement);
-  }
-
-  /**
-   * Get values of annotation
-   *
-   * @param declaration
-   * @param type
-   *          The type of the annotation
-   * @return name->value map of annotation values
-   */
-  private HashMap<String, Object> getValues(Declaration declaration, AnnotationTypeDeclaration type) {
-    HashMap<String, Object> values = new HashMap<String, Object>();
-    Collection<AnnotationMirror> annotations = declaration.getAnnotationMirrors();
-    // iterate over the mirrors.
-
-    for (AnnotationMirror mirror : annotations) {
-      // if the mirror in this iteration is for our note declaration...
-      if (mirror.getAnnotationType().getDeclaration().equals(type)) {
-        for(AnnotationTypeElementDeclaration annotationType : mirror.getElementValues().keySet()) {
-          Object value = mirror.getElementValues().get(annotationType).getValue();
-          Object defaultValue = annotationType.getDefaultValue();
-          values.put(annotationType.getSimpleName(), value != null ? value : defaultValue);
+        // find default values...painful
+        for (AnnotationTypeElementDeclaration annotationType : type
+                .getMethods()) {
+            AnnotationValue value = annotationType.getDefaultValue();
+            if (value != null) {
+                String name = annotationType.getSimpleName();
+                if (!values.containsKey(name))
+                    values.put(name, value.getValue());
+            }
         }
-      }
-    }
 
-    //find default values...painful
-    for(AnnotationTypeElementDeclaration annotationType : type.getMethods()) {
-        AnnotationValue value = annotationType.getDefaultValue();
-        if(value != null) {
-            String name = annotationType.getSimpleName();
-            if(!values.containsKey(name))
-                values.put(name, value.getValue());
-        }
+        return values;
     }
-
-    return values;
-  }
 }

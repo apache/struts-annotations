@@ -31,47 +31,45 @@ import com.sun.mirror.apt.AnnotationProcessorFactory;
 import com.sun.mirror.apt.AnnotationProcessors;
 import com.sun.mirror.declaration.AnnotationTypeDeclaration;
 
-public class TLDAnnotationProcessorFactory implements AnnotationProcessorFactory {
+public class TLDAnnotationProcessorFactory implements
+        AnnotationProcessorFactory {
 
-  /**
-   * Returns a TLD annotation processor.
-   *
-   * @return An annotation processor for note annotations if requested, otherwise, returns the NO_OP
-   *         annotation processor.
-   */
-  public AnnotationProcessor getProcessorFor(Set<AnnotationTypeDeclaration> declarations,
-      AnnotationProcessorEnvironment env) {
-    AnnotationProcessor result;
-    if (declarations.isEmpty()) {
-      result = AnnotationProcessors.NO_OP;
-    } else {
-      result = new TagAnnotationProcessor(env);
+    /**
+     * Returns a TLD annotation processor.
+     * 
+     * @return An annotation processor for note annotations if requested,
+     *         otherwise, returns the NO_OP annotation processor.
+     */
+    public AnnotationProcessor getProcessorFor(
+            Set<AnnotationTypeDeclaration> declarations,
+            AnnotationProcessorEnvironment env) {
+        AnnotationProcessor result;
+        if (declarations.isEmpty()) {
+            result = AnnotationProcessors.NO_OP;
+        } else {
+            result = new TagAnnotationProcessor(env);
+        }
+        return result;
     }
-    return result;
-  }
 
-  /**
-   * This factory builds a processor for Tag and TagAttribute
-   *
-   * @return a collection containing StutsTag and StrutsTagAttribute
-   */
-  public Collection<String> supportedAnnotationTypes() {
-    return Arrays.asList(TagAnnotationProcessor.TAG, TagAnnotationProcessor.TAG_ATTRIBUTE);
-  }
+    /**
+     * This factory builds a processor for Tag and TagAttribute
+     * 
+     * @return a collection containing StutsTag and StrutsTagAttribute
+     */
+    public Collection<String> supportedAnnotationTypes() {
+        return Arrays.asList(TagAnnotationProcessor.TAG,
+                TagAnnotationProcessor.TAG_ATTRIBUTE);
+    }
 
-  /**
-   * Options used to generate the TLD
-   *
-   * @return an empty list.
-   */
-  public Collection<String> supportedOptions() {
-    return Arrays.asList("-AoutFile",
-        "-AtlibVersion",
-        "-AjspVersion",
-        "-AshortName",
-        "-Auri",
-        "-Adescription",
-        "-AdisplayName",
-        "-outTemplatesDir");
-  }
+    /**
+     * Options used to generate the TLD
+     * 
+     * @return an empty list.
+     */
+    public Collection<String> supportedOptions() {
+        return Arrays.asList("-AoutFile", "-AtlibVersion", "-AjspVersion",
+                "-AshortName", "-Auri", "-Adescription", "-AdisplayName",
+                "-outTemplatesDir");
+    }
 }
