@@ -39,10 +39,6 @@ Please do not edit it directly.
 			</#list>
 		</table>
 		<!-- END SNIPPET: tagattributes -->
-		
-		<p>
-        <center><a href="index.html">Back to Taglib Index</a></center>
-        </p>
 	</body>
 </html>
 
