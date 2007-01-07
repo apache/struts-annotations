@@ -23,6 +23,7 @@ package org.apache.struts.annotations.taglib.apt;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class Tag {
     private String name;
@@ -31,7 +32,7 @@ public class Tag {
     private String description;
     private boolean include = true;
     private String declaredType;
-    private Map<String, TagAttribute> attributes = new HashMap<String, TagAttribute>();
+    private Map<String, TagAttribute> attributes = new TreeMap<String, TagAttribute>();
 
     public String getDescription() {
         return description;
