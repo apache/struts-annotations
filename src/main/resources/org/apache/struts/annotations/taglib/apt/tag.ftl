@@ -30,13 +30,7 @@ Please do not edit it directly.
 			<#list tag.attributes as att>
 				<tr>
 					<td align="left" valign="top">${att.name}</td>
-					<td align="left" valign="top">
-                        <#if att.required>
-                            <strong>true</strong>
-                        <#else>
-                            false
-                        </#if>
-                        </td>
+					<td align="left" valign="top"><#if att.required><strong>true</strong><#else>false</#if></td>
 					<td align="left" valign="top">${att.defaultValue}</td>
 					<td align="left" valign="top">${att.rtexprvalue?string}</td>
 					<td align="left" valign="top">${att.type}</td>
