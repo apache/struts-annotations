@@ -28,6 +28,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.TreeMap;
 import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -65,7 +66,7 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
     private AnnotationProcessorEnvironment environment;
     private AnnotationTypeDeclaration tagDeclaration;
     private AnnotationTypeDeclaration tagAttributeDeclaration;
-    private Map<String, Tag> tags = new HashMap<String, Tag>();
+    private Map<String, Tag> tags = new TreeMap<String, Tag>();
 
     public TagAnnotationProcessor(AnnotationProcessorEnvironment env) {
         environment = env;
@@ -90,7 +91,7 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
             // type
             TypeDeclaration typeDeclaration = (TypeDeclaration) declaration;
             String typeName = typeDeclaration.getQualifiedName();
-            HashMap<String, Object> values = getValues(typeDeclaration,
+            Map<String, Object> values = getValues(typeDeclaration,
                     tagDeclaration);
             // create Tag and apply values found
             Tag tag = new Tag();
@@ -109,7 +110,7 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
             MethodDeclaration methodDeclaration = (MethodDeclaration) declaration;
             String typeName = methodDeclaration.getDeclaringType()
                     .getQualifiedName();
-            HashMap<String, Object> values = getValues(methodDeclaration,
+            Map<String, Object> values = getValues(methodDeclaration,
                     tagAttributeDeclaration);
             // create Attribute and apply values found
             TagAttribute attribute = new TagAttribute();
@@ -346,9 +347,9 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
      *            The type of the annotation
      * @return name->value map of annotation values
      */
-    private HashMap<String, Object> getValues(Declaration declaration,
+    private Map<String, Object> getValues(Declaration declaration,
             AnnotationTypeDeclaration type) {
-        HashMap<String, Object> values = new HashMap<String, Object>();
+        Map<String, Object> values = new TreeMap<String, Object>();
         Collection<AnnotationMirror> annotations = declaration
                 .getAnnotationMirrors();
         // iterate over the mirrors.
