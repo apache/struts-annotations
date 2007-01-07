@@ -31,6 +31,7 @@ public class TagAttribute {
     private boolean rtexprvalue;
     private String description;
     private String defaultValue;
+    private String type;
 
     public String getDescription() {
         return description;
@@ -70,5 +71,13 @@ public class TagAttribute {
 
     public void setDefaultValue(String defaultValue) {
         this.defaultValue = defaultValue;
+    }
+    
+    public String getType() {
+        return type;
+    }
+    
+    public void setType(String type) {
+        this.type = type;
     }
 }

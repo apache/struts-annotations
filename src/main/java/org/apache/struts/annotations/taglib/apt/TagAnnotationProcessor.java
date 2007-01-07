@@ -126,6 +126,7 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
             attribute.setRequired((Boolean) values.get("required"));
             attribute.setRtexprvalue((Boolean) values.get("rtexprvalue"));
             attribute.setDefaultValue((String) values.get("defaultValue"));
+            attribute.setType((String) values.get("type"));
             // add to map
             Tag parentTag = tags.get(typeName);
             if (parentTag != null)
