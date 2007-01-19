@@ -25,7 +25,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.TreeMap;
@@ -60,8 +59,8 @@ import freemarker.template.DefaultObjectWrapper;
 import freemarker.template.Template;
 
 public class TagAnnotationProcessor implements AnnotationProcessor {
-    public static final String TAG = "org.apache.struts.annotations.StrutsTag";
-    public static final String TAG_ATTRIBUTE = "org.apache.struts.annotations.StrutsTagAttribute";
+    public static final String TAG = "org.apache.struts2.views.annotations.StrutsTag";
+    public static final String TAG_ATTRIBUTE = "org.apache.struts2.views.annotations.StrutsTagAttribute";
 
     private AnnotationProcessorEnvironment environment;
     private AnnotationTypeDeclaration tagDeclaration;
@@ -204,7 +203,7 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
             for (Tag tag : tags.values()) {
                 if (tag.isInclude()) {
                     // model
-                    HashMap root = new HashMap();
+                    HashMap<String, Tag> root = new HashMap<String, Tag>();
                     root.put("tag", tag);
 
                     // save file
@@ -258,7 +257,7 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
 
             // save to file
             TransformerFactory tf = TransformerFactory.newInstance();
-            tf.setAttribute("indent-number", new Integer(2));
+            tf.setAttribute("indent-number", 2);
             Transformer transformer = tf.newTransformer();
             // if tiger would just format it :(
             // formatting bug in tiger
@@ -342,7 +341,7 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
     /**
      * Get values of annotation
      * 
-     * @param declaration
+     * @param declaration The annotation declaration
      * @param type
      *            The type of the annotation
      * @return name->value map of annotation values

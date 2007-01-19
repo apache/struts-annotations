@@ -21,7 +21,6 @@
 package org.apache.struts.annotations.taglib.apt;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
