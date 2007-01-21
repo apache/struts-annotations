@@ -14,6 +14,10 @@
     <packaging>jar</packaging>
     <name>Struts Annotations</name>
     <url>http://struts.apache.org</url>
+    <description>
+        struts-annotations adds apt generation support for struts based annotated projetcs,
+        such as TLD and documentation generation from annotated component classes as used in struts2 
+    </description>
 
     <scm>
         <connection>scm:svn:http://svn.apache.org/repos/asf/struts/maven/trunk/</connection>
