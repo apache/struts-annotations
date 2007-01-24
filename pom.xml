@@ -113,7 +113,7 @@
     <distributionManagement>
         <site>
             <id>apache-site</id>
-            <url>scp://people.apache.org/www/struts.apache.org/2.x/</url>
+            <url>scp://people.apache.org/www/struts.apache.org/struts-annotations/</url>
         </site>
     </distributionManagement>
 
