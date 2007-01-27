@@ -9,7 +9,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.struts</groupId>
     <artifactId>struts-annotations</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.1</version>
     <packaging>jar</packaging>
     <name>Struts Annotations</name>
     <url>http://struts.apache.org</url>
@@ -19,9 +19,9 @@
     </description>
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/struts/maven/trunk/struts-annotations</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/struts/maven/trunk/struts-annotations</developerConnection>
-        <url>http://svn.apache.org/viewvc/struts/maven/trunk/struts-annotations</url>
+        <connection>scm:svn:https://svn.apache.org/repos/asf/struts/maven/tags/STRUTS_ANNOTATIONS_1_0_1</connection>
+        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/struts/maven/tags/STRUTS_ANNOTATIONS_1_0_1</developerConnection>
+        <url>https://svn.apache.org/repos/asf/struts/maven/tags/STRUTS_ANNOTATIONS_1_0_1</url>
     </scm>
 
 
