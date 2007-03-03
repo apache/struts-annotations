@@ -20,11 +20,19 @@
  */
 package org.apache.struts.annotations.taglib.apt;
 
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.OutputStreamWriter;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.TreeMap;
@@ -61,6 +69,7 @@ import freemarker.template.Template;
 public class TagAnnotationProcessor implements AnnotationProcessor {
     public static final String TAG = "org.apache.struts2.views.annotations.StrutsTag";
     public static final String TAG_ATTRIBUTE = "org.apache.struts2.views.annotations.StrutsTagAttribute";
+    public static final String TAG_SKIP_HIERARCHY = "org.apache.struts2.views.annotations.StrutsTagSkipInheritance";
 
     private AnnotationProcessorEnvironment environment;
     private AnnotationTypeDeclaration tagDeclaration;
@@ -113,7 +122,6 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
                     tagAttributeDeclaration);
             // create Attribute and apply values found
             TagAttribute attribute = new TagAttribute();
-            attribute.setDescription((String) values.get("description"));
             String name = (String) values.get("name");
             if (name == null || name.length() == 0) {
                 // get name from method
@@ -122,11 +130,8 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
                         .charAt(3)))
                         + methodName.substring(4);
             }
-            attribute.setName(name);
-            attribute.setRequired((Boolean) values.get("required"));
-            attribute.setRtexprvalue((Boolean) values.get("rtexprvalue"));
-            attribute.setDefaultValue((String) values.get("defaultValue"));
-            attribute.setType((String) values.get("type"));
+            values.put("name", name);
+            populateTagAttributes(attribute, values);
             // add to map
             Tag parentTag = tags.get(typeName);
             if (parentTag != null)
@@ -153,21 +158,72 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
         saveTemplates();
     }
 
+    private void populateTagAttributes(TagAttribute attribute, Map<String, Object> values) {
+        attribute.setRequired((Boolean) values.get("required"));
+        attribute.setRtexprvalue((Boolean) values.get("rtexprvalue"));
+        attribute.setDefaultValue((String) values.get("defaultValue"));
+        attribute.setType((String) values.get("type"));
+        attribute.setDescription((String) values.get("description"));
+        attribute.setName((String) values.get("name"));
+    }
+
     private void processHierarchy(Tag tag) {
         try {
             Class clazz = Class.forName(tag.getDeclaredType());
-            while ((clazz = clazz.getSuperclass()) != null) {
+            //skip hierarchy processing if the class is marked with the skip annotation
+            while(getAnnotation(TAG_SKIP_HIERARCHY, clazz.getAnnotations()) == null
+                && ((clazz = clazz.getSuperclass()) != null)) {
                 Tag parentTag = tags.get(clazz.getName());
                 // copy parent annotations to this tag
-                if (parentTag != null) {
-                    for (TagAttribute attribute : parentTag.getAttributes()) {
+                if(parentTag != null) {
+                    for(TagAttribute attribute : parentTag.getAttributes()) {
+                        tag.addTagAttribute(attribute);
+                    }
+                } else {
+                    // Maybe the parent class is already compiled
+                    addTagAttributesFromParent(tag, clazz);
+                }
+            }
+        } catch(Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void addTagAttributesFromParent(Tag tag, Class clazz) throws ClassNotFoundException {
+        try {
+            BeanInfo info = Introspector.getBeanInfo(clazz);
+            PropertyDescriptor[] props = info.getPropertyDescriptors();
+
+            //iterate over class fields
+            for(int i = 0; i < props.length; ++i) {
+                PropertyDescriptor prop = props[i];
+                Method writeMethod = prop.getWriteMethod();
+                //make sure it is public
+                if(writeMethod != null && Modifier.isPublic(writeMethod.getModifiers())) {
+                    //can't use the genertic getAnnotation 'cause the class it not on this jar
+                    Annotation annotation = getAnnotation(TAG_ATTRIBUTE, writeMethod.getAnnotations());
+                    if(annotation != null) {
+                        Map<String, Object> values = getValues(annotation);
+                        //create tag
+                        TagAttribute attribute = new TagAttribute();
+                        values.put("name", prop.getName());
+                        populateTagAttributes(attribute, values);
                         tag.addTagAttribute(attribute);
                     }
                 }
+
             }
-        } catch (ClassNotFoundException e) {
+        } catch(Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private Annotation getAnnotation(String typeName, Annotation[] annotations) {
+        for(int i = 0; i < annotations.length; i++) {
+            if(annotations[i].annotationType().getName().equals(typeName))
+                return annotations[i];
+        }
+        return null;
     }
 
     private void checkOptions() {
@@ -340,7 +396,7 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
 
     /**
      * Get values of annotation
-     * 
+     *
      * @param declaration The annotation declaration
      * @param type
      *            The type of the annotation
@@ -375,6 +431,35 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
                 String name = annotationType.getSimpleName();
                 if (!values.containsKey(name))
                     values.put(name, value.getValue());
+            }
+        }
+
+        return values;
+    }
+
+    /**
+     * Get values of annotation
+     *
+     * @param annotation The annotation
+     * @return name->value map of annotation values
+     * @throws IntrospectionException
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     * @throws IllegalArgumentException
+     */
+    private  Map<String, Object> getValues(Annotation annotation) throws IntrospectionException, IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+        Map<String, Object> values = new TreeMap<String, Object>();
+        //if the tag classes were on this project we could just cast to the right type
+        //but they are needed on core
+        Class annotationType = annotation.annotationType();
+
+        Method[] methods = annotationType.getMethods();
+        //iterate over class fields
+        for(int i = 0; i < methods.length; ++i) {
+            Method method = methods[i];
+            if(method != null && method.getParameterTypes().length == 0) {
+                Object value = method.invoke(annotation, new Object[0]);
+                values.put(method.getName(), value);
             }
         }
 
