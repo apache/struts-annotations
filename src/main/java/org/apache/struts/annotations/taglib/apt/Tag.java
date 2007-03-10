@@ -20,7 +20,9 @@
  */
 package org.apache.struts.annotations.taglib.apt;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -32,7 +34,8 @@ public class Tag {
     private boolean include = true;
     private String declaredType;
     private Map<String, TagAttribute> attributes = new TreeMap<String, TagAttribute>();
-
+    private List<String> skipAttributes = new ArrayList<String>();
+    
     public String getDescription() {
         return description;
     }
@@ -88,5 +91,13 @@ public class Tag {
 
     public void setDeclaredType(String declaredType) {
         this.declaredType = declaredType;
+    }
+
+    public List<String> getSkipAttributes() {
+        return skipAttributes;
+    }
+    
+    public void addSkipAttribute(String name) {
+        this.skipAttributes.add(name);
     }
 }

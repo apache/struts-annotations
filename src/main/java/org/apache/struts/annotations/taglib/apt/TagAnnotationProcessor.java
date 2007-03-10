@@ -35,6 +35,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.TreeMap;
 import java.util.Map;
 
@@ -74,6 +75,7 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
     private AnnotationProcessorEnvironment environment;
     private AnnotationTypeDeclaration tagDeclaration;
     private AnnotationTypeDeclaration tagAttributeDeclaration;
+    private AnnotationTypeDeclaration skipDeclaration;
     private Map<String, Tag> tags = new TreeMap<String, Tag>();
 
     public TagAnnotationProcessor(AnnotationProcessorEnvironment env) {
@@ -82,6 +84,8 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
                 .getTypeDeclaration(TAG);
         tagAttributeDeclaration = (AnnotationTypeDeclaration) environment
                 .getTypeDeclaration(TAG_ATTRIBUTE);
+        skipDeclaration = (AnnotationTypeDeclaration) environment
+                .getTypeDeclaration(TAG_SKIP_HIERARCHY);
     }
 
     public void process() {
@@ -93,6 +97,8 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
                 .getDeclarationsAnnotatedWith(tagDeclaration);
         Collection<Declaration> attributesDeclarations = environment
                 .getDeclarationsAnnotatedWith(tagAttributeDeclaration);
+        Collection<Declaration> skipDeclarations = environment
+                 .getDeclarationsAnnotatedWith(skipDeclaration);
 
         // find Tags
         for (Declaration declaration : tagDeclarations) {
@@ -110,6 +116,24 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
             tag.setDeclaredType(typeName);
             // add to map
             tags.put(typeName, tag);
+        }
+        
+        //find attributes to be skipped
+        for (Declaration declaration : skipDeclarations) {
+            //types will be ignored when hierarchy is scanned
+            if (declaration instanceof MethodDeclaration) {
+                MethodDeclaration methodDeclaration = (MethodDeclaration) declaration;
+                String typeName = methodDeclaration.getDeclaringType().getQualifiedName();
+                String methodName = methodDeclaration.getSimpleName();
+                String name = String.valueOf(Character.toLowerCase(methodName
+                    .charAt(3)))
+                    + methodName.substring(4);
+                Tag tag = tags.get(typeName);
+                if(tag != null) {
+                    //if it is on an abstract class, there is not tag for it at this point
+                    tags.get(typeName).addSkipAttribute(name);
+                }
+            }
         }
 
         // find Tags Attributes
@@ -170,6 +194,7 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
     private void processHierarchy(Tag tag) {
         try {
             Class clazz = Class.forName(tag.getDeclaredType());
+            List<String> skipAttributes = tag.getSkipAttributes();
             //skip hierarchy processing if the class is marked with the skip annotation
             while(getAnnotation(TAG_SKIP_HIERARCHY, clazz.getAnnotations()) == null
                 && ((clazz = clazz.getSuperclass()) != null)) {
@@ -177,7 +202,8 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
                 // copy parent annotations to this tag
                 if(parentTag != null) {
                     for(TagAttribute attribute : parentTag.getAttributes()) {
-                        tag.addTagAttribute(attribute);
+                        if(!skipAttributes.contains(attribute.getName()))
+                            tag.addTagAttribute(attribute);
                     }
                 } else {
                     // Maybe the parent class is already compiled
@@ -193,16 +219,18 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
         try {
             BeanInfo info = Introspector.getBeanInfo(clazz);
             PropertyDescriptor[] props = info.getPropertyDescriptors();
-
+            List<String> skipAttributes = tag.getSkipAttributes();
+            
             //iterate over class fields
             for(int i = 0; i < props.length; ++i) {
                 PropertyDescriptor prop = props[i];
                 Method writeMethod = prop.getWriteMethod();
+               
                 //make sure it is public
                 if(writeMethod != null && Modifier.isPublic(writeMethod.getModifiers())) {
                     //can't use the genertic getAnnotation 'cause the class it not on this jar
                     Annotation annotation = getAnnotation(TAG_ATTRIBUTE, writeMethod.getAnnotations());
-                    if(annotation != null) {
+                    if(annotation != null && !skipAttributes.contains(prop.getName())) {
                         Map<String, Object> values = getValues(annotation);
                         //create tag
                         TagAttribute attribute = new TagAttribute();
@@ -217,7 +245,7 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
             throw new RuntimeException(e);
         }
     }
-
+    
     private Annotation getAnnotation(String typeName, Annotation[] annotations) {
         for(int i = 0; i < annotations.length; i++) {
             if(annotations[i].annotationType().getName().equals(typeName))

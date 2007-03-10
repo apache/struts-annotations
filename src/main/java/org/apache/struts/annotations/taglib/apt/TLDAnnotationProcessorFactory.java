@@ -59,7 +59,8 @@ public class TLDAnnotationProcessorFactory implements
      */
     public Collection<String> supportedAnnotationTypes() {
         return Arrays.asList(TagAnnotationProcessor.TAG,
-                TagAnnotationProcessor.TAG_ATTRIBUTE);
+                TagAnnotationProcessor.TAG_ATTRIBUTE,
+                TagAnnotationProcessor.TAG_SKIP_HIERARCHY);
     }
 
     /**
