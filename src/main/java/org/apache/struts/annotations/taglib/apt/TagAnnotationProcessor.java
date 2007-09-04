@@ -114,6 +114,7 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
             tag.setTldBodyContent((String) values.get("tldBodyContent"));
             tag.setTldTagClass((String) values.get("tldTagClass"));
             tag.setDeclaredType(typeName);
+	    tag.setAllowDynamicAttributes((Boolean) values.get("allowDynamicAttributes"));
             // add to map
             tags.put(typeName, tag);
         }
@@ -318,12 +319,14 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
 
             // taglib
             Element tagLib = document.createElement("taglib");
+            tagLib.setAttribute("xmlns", "http://java.sun.com/xml/ns/j2ee");
+	    tagLib.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
+	    tagLib.setAttribute("xsi:schemaLocation", "http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-jsptaglibrary_2_0.xsd");
+	    tagLib.setAttribute("version", getOption("jspVersion"));
             document.appendChild(tagLib);
             // tag lib attributes
             appendTextNode(document, tagLib, "tlib-version",
                     getOption("tlibVersion"), false);
-            appendTextNode(document, tagLib, "jsp-version",
-                    getOption("jspVersion"), false);
             appendTextNode(document, tagLib, "short-name",
                     getOption("shortName"), false);
             appendTextNode(document, tagLib, "uri", getOption("uri"), false);
@@ -348,10 +351,6 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
             // (http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6296446)
 
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC,
-                    "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.2//EN");
-            transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM,
-                    "http://java.sun.com/dtd/web-jsptaglibrary_1_2.dtd");
             transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
 
             Source source = new DOMSource(document);
@@ -397,6 +396,7 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
             createElement(doc, tagElement, attribute);
         }
 
+        appendTextNode(doc, tagElement, "dynamic-attributes", String.valueOf(tag.isAllowDynamicAttributes()), false);
     }
 
     private void createElement(Document doc, Element tagElement,

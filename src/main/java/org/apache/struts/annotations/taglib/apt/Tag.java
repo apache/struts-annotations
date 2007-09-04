@@ -31,6 +31,7 @@ public class Tag {
     private String tldBodyContent;
     private String tldTagClass;
     private String description;
+    private boolean allowDynamicAttributes;
     private boolean include = true;
     private String declaredType;
     private Map<String, TagAttribute> attributes = new TreeMap<String, TagAttribute>();
@@ -85,6 +86,14 @@ public class Tag {
         this.include = include;
     }
 
+    public boolean isAllowDynamicAttributes() {
+        return allowDynamicAttributes;
+    }
+
+    public void setAllowDynamicAttributes(boolean allowDynamicAttributes) {
+        this.allowDynamicAttributes = allowDynamicAttributes;
+    }
+    
     public String getDeclaredType() {
         return declaredType;
     }
