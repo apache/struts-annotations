@@ -9,7 +9,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.struts</groupId>
     <artifactId>struts-annotations</artifactId>
-    <version>1.0.4-SNAPSHOT</version>
+    <version>1.0.3-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Struts Annotations</name>
     <url>http://struts.apache.org</url>
@@ -114,7 +114,7 @@
         <repository>
             <id>struts-staging</id>
             <name>Apache Struts Staging Repository</name>
-            <url>scp://people.apache.org/www/people.apache.org/builds/struts-annotations/${pom.version}/m2-staging-repository</url>
+            <url>scp://people.apache.org/www/people.apache.org/builds/struts/struts-annotations/${pom.version}/m2-staging-repository</url>
         </repository>
         <site>
             <id>apache-site</id>
