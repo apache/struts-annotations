@@ -118,7 +118,7 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
             // add to map
             tags.put(typeName, tag);
         }
-        
+
         //find attributes to be skipped
         for (Declaration declaration : skipDeclarations) {
             //types will be ignored when hierarchy is scanned
@@ -221,12 +221,12 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
             BeanInfo info = Introspector.getBeanInfo(clazz);
             PropertyDescriptor[] props = info.getPropertyDescriptors();
             List<String> skipAttributes = tag.getSkipAttributes();
-            
+
             //iterate over class fields
             for(int i = 0; i < props.length; ++i) {
                 PropertyDescriptor prop = props[i];
                 Method writeMethod = prop.getWriteMethod();
-               
+
                 //make sure it is public
                 if(writeMethod != null && Modifier.isPublic(writeMethod.getModifiers())) {
                     //can't use the genertic getAnnotation 'cause the class it not on this jar
@@ -246,7 +246,7 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
             throw new RuntimeException(e);
         }
     }
-    
+
     private Annotation getAnnotation(String typeName, Annotation[] annotations) {
         for(int i = 0; i < annotations.length; i++) {
             if(annotations[i].annotationType().getName().equals(typeName))
@@ -325,6 +325,8 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
 	    tagLib.setAttribute("version", getOption("jspVersion"));
             document.appendChild(tagLib);
             // tag lib attributes
+            appendTextNode(document, tagLib, "description",
+                    getOption("description"), true);
             appendTextNode(document, tagLib, "tlib-version",
                     getOption("tlibVersion"), false);
             appendTextNode(document, tagLib, "short-name",
@@ -332,8 +334,6 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
             appendTextNode(document, tagLib, "uri", getOption("uri"), false);
             appendTextNode(document, tagLib, "display-name",
                     getOption("displayName"), false);
-            appendTextNode(document, tagLib, "description",
-                    getOption("description"), true);
 
             // create tags
             for (Map.Entry<String, Tag> entry : tags.entrySet()) {
@@ -383,13 +383,13 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
     private void createElement(Document doc, Element tagLibElement, Tag tag) {
         Element tagElement = doc.createElement("tag");
         tagLibElement.appendChild(tagElement);
+        appendTextNode(doc, tagElement, "description", tag.getDescription(),
+                true);
         appendTextNode(doc, tagElement, "name", tag.getName(), false);
         appendTextNode(doc, tagElement, "tag-class", tag.getTldTagClass(),
                 false);
         appendTextNode(doc, tagElement, "body-content",
                 tag.getTldBodyContent(), false);
-        appendTextNode(doc, tagElement, "description", tag.getDescription(),
-                true);
 
         // save attributes
         for (TagAttribute attribute : tag.getAttributes()) {
@@ -403,14 +403,14 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
             TagAttribute attribute) {
         Element attributeElement = doc.createElement("attribute");
         tagElement.appendChild(attributeElement);
+        appendTextNode(doc, attributeElement, "description", attribute
+                .getDescription(), true);
         appendTextNode(doc, attributeElement, "name", attribute.getName(),
                 false);
         appendTextNode(doc, attributeElement, "required", String
                 .valueOf(attribute.isRequired()), false);
         appendTextNode(doc, attributeElement, "rtexprvalue", String
                 .valueOf(attribute.isRtexprvalue()), false);
-        appendTextNode(doc, attributeElement, "description", attribute
-                .getDescription(), true);
     }
 
     private void appendTextNode(Document doc, Element element, String name,
