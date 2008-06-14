@@ -114,7 +114,7 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
             tag.setTldBodyContent((String) values.get("tldBodyContent"));
             tag.setTldTagClass((String) values.get("tldTagClass"));
             tag.setDeclaredType(typeName);
-	    tag.setAllowDynamicAttributes((Boolean) values.get("allowDynamicAttributes"));
+            tag.setAllowDynamicAttributes((Boolean) values.get("allowDynamicAttributes"));
             // add to map
             tags.put(typeName, tag);
         }
@@ -320,9 +320,9 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
             // taglib
             Element tagLib = document.createElement("taglib");
             tagLib.setAttribute("xmlns", "http://java.sun.com/xml/ns/j2ee");
-	    tagLib.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
-	    tagLib.setAttribute("xsi:schemaLocation", "http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-jsptaglibrary_2_0.xsd");
-	    tagLib.setAttribute("version", getOption("jspVersion"));
+            tagLib.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
+            tagLib.setAttribute("xsi:schemaLocation", "http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-jsptaglibrary_2_0.xsd");
+            tagLib.setAttribute("version", getOption("jspVersion"));
             document.appendChild(tagLib);
             // tag lib attributes
             appendTextNode(document, tagLib, "description",
