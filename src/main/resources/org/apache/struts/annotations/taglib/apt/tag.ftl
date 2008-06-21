@@ -20,7 +20,7 @@ Please do not edit it directly.
 		<!-- START SNIPPET: tagattributes -->
 		<table width="100%">
 			<tr>
-				<td colspan="6"><h4>Dynamic Attributes Allowed:</h4> ${tag.allowDynamicAttributes}</td>
+				<td colspan="6"><h4>Dynamic Attributes Allowed:</h4> ${tag.allowDynamicAttributes?string}</td>
 			</tr>
 			<tr>
 				<td colspan="6">&nbsp;</td>
