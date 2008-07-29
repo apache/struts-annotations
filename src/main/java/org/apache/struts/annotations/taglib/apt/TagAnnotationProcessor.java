@@ -327,13 +327,13 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
             // tag lib attributes
             appendTextNode(document, tagLib, "description",
                     getOption("description"), true);
+            appendTextNode(document, tagLib, "display-name",
+                    getOption("displayName"), false);
             appendTextNode(document, tagLib, "tlib-version",
                     getOption("tlibVersion"), false);
             appendTextNode(document, tagLib, "short-name",
                     getOption("shortName"), false);
             appendTextNode(document, tagLib, "uri", getOption("uri"), false);
-            appendTextNode(document, tagLib, "display-name",
-                    getOption("displayName"), false);
 
             // create tags
             for (Map.Entry<String, Tag> entry : tags.entrySet()) {
