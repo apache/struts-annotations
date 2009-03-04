@@ -353,9 +353,15 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
 
+            //create output directory if it does not exists
+            File outputFile = new File(getOption("outFile"));
+            File parentDir = outputFile.getParentFile();
+            if (!parentDir.exists())
+                parentDir.mkdirs();
+
             Source source = new DOMSource(document);
             Result result = new StreamResult(new OutputStreamWriter(
-                    new FileOutputStream(getOption("outFile"))));
+                    new FileOutputStream(outputFile)));
             transformer.transform(source, result);
         } catch (Exception e) {
             // oops we cannot throw checked exceptions
