@@ -3,18 +3,17 @@
     <parent>
         <groupId>org.apache.struts</groupId>
         <artifactId>struts-master</artifactId>
-        <version>4</version>
+        <version>9</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.apache.struts</groupId>
     <artifactId>struts-annotations</artifactId>
     <version>1.0.6-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Struts Annotations</name>
     <url>http://struts.apache.org</url>
     <description>
-        struts-annotations adds apt generation support for struts based annotated projetcs,
+        struts-annotations adds apt generation support for struts based annotated projects,
         such as TLD and documentation generation from annotated component classes as used in struts2 
     </description>
 
@@ -30,9 +29,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.3</version>
                 <configuration>
-                    <source>1.5</source>
-                    <target>1.5</target>
+                    <source>1.7</source>
+                    <target>1.7</target>
+                    <compilerArgument>-proc:none</compilerArgument>
                 </configuration>
             </plugin>
             <plugin>
@@ -57,80 +58,15 @@
                 <dependency>
                     <groupId>com.sun</groupId>
                     <artifactId>tools</artifactId>
-                    <version>1.5.0</version>
+                    <version>1.7.0</version>
                     <scope>system</scope>
                     <systemPath>${java.home}/../lib/tools.jar</systemPath>
                 </dependency>
             </dependencies>
         </profile>
-        <profile>
-            <id>release</id>
-            <activation>
-                <property>
-                    <name>release</name>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>attach-javadoc</id>
-                                <goals><goal>jar</goal></goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>attach-source</id>
-                                <goals><goal>jar</goal></goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
     </profiles>
  
-    <distributionManagement>
-        <repository>
-            <id>struts-staging</id>
-            <name>Apache Struts Staging Repository</name>
-            <url>scp://people.apache.org/www/people.apache.org/builds/struts/struts-annotations-${pom.version}/m2-staging-repository</url>
-        </repository>
-        <site>
-            <id>apache-site</id>
-            <url>scp://people.apache.org/www/struts.apache.org/struts-annotations/</url>
-        </site>
-    </distributionManagement>
-
     <dependencies>
-
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>3.8.1</version>
-            <scope>test</scope>
-        </dependency>
-
        <dependency>
             <groupId>org.freemarker</groupId>
             <artifactId>freemarker</artifactId>
