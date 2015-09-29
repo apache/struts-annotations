@@ -18,14 +18,23 @@
     </description>
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/struts/maven/trunk/struts-annotations</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/struts/maven/trunk/struts-annotations</developerConnection>
-        <url>http://svn.apache.org/viewvc/struts/maven/trunk/struts-annotations</url>
+        <connection>scm:git:git://git.apache.org/struts-annotations.git</connection>
+        <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/struts-annotations.git</developerConnection>
+        <url>http://git.apache.org/struts-annotations.git</url>
+        <tag>HEAD</tag>
     </scm>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5</version>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -34,12 +43,6 @@
                     <source>1.7</source>
                     <target>1.7</target>
                     <compilerArgument>-proc:none</compilerArgument>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-release-plugin</artifactId>
-                <configuration>
-                    <tagBase>https://svn.apache.org/repos/asf/struts/maven/tags</tagBase>
                 </configuration>
             </plugin>
         </plugins>
@@ -73,4 +76,5 @@
             <version>2.3.11</version>
         </dependency>
     </dependencies>
+
 </project>
