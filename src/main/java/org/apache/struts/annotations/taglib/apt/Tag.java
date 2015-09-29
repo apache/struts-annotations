@@ -34,8 +34,8 @@ public class Tag {
     private boolean allowDynamicAttributes;
     private boolean include = true;
     private String declaredType;
-    private Map<String, TagAttribute> attributes = new TreeMap<String, TagAttribute>();
-    private List<String> skipAttributes = new ArrayList<String>();
+    private Map<String, TagAttribute> attributes = new TreeMap<>();
+    private List<String> skipAttributes = new ArrayList<>();
     
     public String getDescription() {
         return description;

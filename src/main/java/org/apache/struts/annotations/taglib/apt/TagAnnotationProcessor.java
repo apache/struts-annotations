@@ -20,25 +20,29 @@
  */
 package org.apache.struts.annotations.taglib.apt;
 
-import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.OutputStreamWriter;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.TreeMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
 
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.NoType;
+import javax.lang.model.util.ElementFilter;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -53,79 +57,53 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Text;
 
-import com.sun.mirror.apt.AnnotationProcessor;
-import com.sun.mirror.apt.AnnotationProcessorEnvironment;
-import com.sun.mirror.declaration.AnnotationMirror;
-import com.sun.mirror.declaration.AnnotationTypeDeclaration;
-import com.sun.mirror.declaration.AnnotationTypeElementDeclaration;
-import com.sun.mirror.declaration.AnnotationValue;
-import com.sun.mirror.declaration.Declaration;
-import com.sun.mirror.declaration.MethodDeclaration;
-import com.sun.mirror.declaration.TypeDeclaration;
-
 import freemarker.template.Configuration;
 import freemarker.template.DefaultObjectWrapper;
 import freemarker.template.Template;
 
-public class TagAnnotationProcessor implements AnnotationProcessor {
+@SupportedAnnotationTypes({TagAnnotationProcessor.TAG, TagAnnotationProcessor.TAG_ATTRIBUTE, TagAnnotationProcessor.TAG_SKIP_HIERARCHY})
+public class TagAnnotationProcessor extends AbstractProcessor {
     public static final String TAG = "org.apache.struts2.views.annotations.StrutsTag";
     public static final String TAG_ATTRIBUTE = "org.apache.struts2.views.annotations.StrutsTagAttribute";
     public static final String TAG_SKIP_HIERARCHY = "org.apache.struts2.views.annotations.StrutsTagSkipInheritance";
 
-    private AnnotationProcessorEnvironment environment;
-    private AnnotationTypeDeclaration tagDeclaration;
-    private AnnotationTypeDeclaration tagAttributeDeclaration;
-    private AnnotationTypeDeclaration skipDeclaration;
-    private Map<String, Tag> tags = new TreeMap<String, Tag>();
+    private Map<String, Tag> tags = new TreeMap<>();
 
-    public TagAnnotationProcessor(AnnotationProcessorEnvironment env) {
-        environment = env;
-        tagDeclaration = (AnnotationTypeDeclaration) environment
-                .getTypeDeclaration(TAG);
-        tagAttributeDeclaration = (AnnotationTypeDeclaration) environment
-                .getTypeDeclaration(TAG_ATTRIBUTE);
-        skipDeclaration = (AnnotationTypeDeclaration) environment
-                .getTypeDeclaration(TAG_SKIP_HIERARCHY);
-    }
-
-    public void process() {
+    @Override
+	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         // make sure all paramters were set
         checkOptions();
 
         // tags
-        Collection<Declaration> tagDeclarations = environment
-                .getDeclarationsAnnotatedWith(tagDeclaration);
-        Collection<Declaration> attributesDeclarations = environment
-                .getDeclarationsAnnotatedWith(tagAttributeDeclaration);
-        Collection<Declaration> skipDeclarations = environment
-                 .getDeclarationsAnnotatedWith(skipDeclaration);
+        TypeElement tagAnnotationType = processingEnv.getElementUtils().getTypeElement(TAG);
+        TypeElement attributeAnnotationType = processingEnv.getElementUtils().getTypeElement(TAG_ATTRIBUTE);
+        TypeElement skipAnnotationType = processingEnv.getElementUtils().getTypeElement(TAG_SKIP_HIERARCHY);
+		Set<? extends javax.lang.model.element.Element> tagDeclarations = roundEnv.getElementsAnnotatedWith(tagAnnotationType);
+		Set<? extends javax.lang.model.element.Element> attributesDeclarations = roundEnv.getElementsAnnotatedWith(attributeAnnotationType);
+		Set<? extends javax.lang.model.element.Element> skipDeclarations = roundEnv.getElementsAnnotatedWith(skipAnnotationType);
 
         // find Tags
-        for (Declaration declaration : tagDeclarations) {
-            // type
-            TypeDeclaration typeDeclaration = (TypeDeclaration) declaration;
-            String typeName = typeDeclaration.getQualifiedName();
-            Map<String, Object> values = getValues(typeDeclaration,
-                    tagDeclaration);
-            // create Tag and apply values found
-            Tag tag = new Tag();
+    	for (javax.lang.model.element.Element element : tagDeclarations) {
+			Map<String, Object> values = getValues(element, tagAnnotationType);
+			TypeElement type = (TypeElement) element;
+			Tag tag = new Tag();
             tag.setDescription((String) values.get("description"));
             tag.setName((String) values.get("name"));
             tag.setTldBodyContent((String) values.get("tldBodyContent"));
             tag.setTldTagClass((String) values.get("tldTagClass"));
-            tag.setDeclaredType(typeName);
+            tag.setDeclaredType(type.getQualifiedName().toString());
             tag.setAllowDynamicAttributes((Boolean) values.get("allowDynamicAttributes"));
             // add to map
-            tags.put(typeName, tag);
-        }
+            tags.put(type.getQualifiedName().toString(), tag);
+		}
 
         //find attributes to be skipped
-        for (Declaration declaration : skipDeclarations) {
+        for (javax.lang.model.element.Element declaration : skipDeclarations) {
             //types will be ignored when hierarchy is scanned
-            if (declaration instanceof MethodDeclaration) {
-                MethodDeclaration methodDeclaration = (MethodDeclaration) declaration;
-                String typeName = methodDeclaration.getDeclaringType().getQualifiedName();
-                String methodName = methodDeclaration.getSimpleName();
+            if (declaration instanceof ExecutableElement) {
+            	ExecutableElement methodDeclaration = (ExecutableElement) declaration;
+                String typeName = ((TypeElement) methodDeclaration.getEnclosingElement()).getQualifiedName().toString();
+                String methodName = methodDeclaration.getSimpleName().toString();
                 String name = String.valueOf(Character.toLowerCase(methodName
                     .charAt(3)))
                     + methodName.substring(4);
@@ -138,19 +116,18 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
         }
 
         // find Tags Attributes
-        for (Declaration declaration : attributesDeclarations) {
+        for (javax.lang.model.element.Element declaration : attributesDeclarations) {
             // type
-            MethodDeclaration methodDeclaration = (MethodDeclaration) declaration;
-            String typeName = methodDeclaration.getDeclaringType()
-                    .getQualifiedName();
+        	ExecutableElement methodDeclaration = (ExecutableElement) declaration;
+        	String typeName = ((TypeElement) methodDeclaration.getEnclosingElement()).getQualifiedName().toString();
             Map<String, Object> values = getValues(methodDeclaration,
-                    tagAttributeDeclaration);
+                    attributeAnnotationType);
             // create Attribute and apply values found
             TagAttribute attribute = new TagAttribute();
             String name = (String) values.get("name");
             if (name == null || name.length() == 0) {
                 // get name from method
-                String methodName = methodDeclaration.getSimpleName();
+                String methodName = methodDeclaration.getSimpleName().toString();
                 name = String.valueOf(Character.toLowerCase(methodName
                         .charAt(3)))
                         + methodName.substring(4);
@@ -159,9 +136,9 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
             populateTagAttributes(attribute, values);
             // add to map
             Tag parentTag = tags.get(typeName);
-            if (parentTag != null)
+            if (parentTag != null){
                 tags.get(typeName).addTagAttribute(attribute);
-            else {
+            }else {
                 // an abstract or base class
                 parentTag = new Tag();
                 parentTag.setDeclaredType(typeName);
@@ -172,7 +149,7 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
         }
 
         // we can't process the hierarchy on the first pass because
-        // apt does not garantees that the base classes will be processed
+        // apt does not guarantee that the base classes will be processed
         // before their subclasses
         for (Map.Entry<String, Tag> entry : tags.entrySet()) {
             processHierarchy(entry.getValue());
@@ -181,9 +158,10 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
         // save
         saveAsXml();
         saveTemplates();
+        return true;
     }
 
-    private void populateTagAttributes(TagAttribute attribute, Map<String, Object> values) {
+    private static void populateTagAttributes(TagAttribute attribute, Map<String, Object> values) {
         attribute.setRequired((Boolean) values.get("required"));
         attribute.setRtexprvalue((Boolean) values.get("rtexprvalue"));
         attribute.setDefaultValue((String) values.get("defaultValue"));
@@ -193,65 +171,55 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
     }
 
     private void processHierarchy(Tag tag) {
-        try {
-            Class clazz = Class.forName(tag.getDeclaredType());
-            List<String> skipAttributes = tag.getSkipAttributes();
-            //skip hierarchy processing if the class is marked with the skip annotation
-            while(getAnnotation(TAG_SKIP_HIERARCHY, clazz.getAnnotations()) == null
-                && ((clazz = clazz.getSuperclass()) != null)) {
-                Tag parentTag = tags.get(clazz.getName());
-                // copy parent annotations to this tag
-                if(parentTag != null) {
-                    for(TagAttribute attribute : parentTag.getAttributes()) {
-                        if(!skipAttributes.contains(attribute.getName()))
-                            tag.addTagAttribute(attribute);
-                    }
-                } else {
-                    // Maybe the parent class is already compiled
-                    addTagAttributesFromParent(tag, clazz);
-                }
-            }
-        } catch(Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void addTagAttributesFromParent(Tag tag, Class clazz) throws ClassNotFoundException {
-        try {
-            BeanInfo info = Introspector.getBeanInfo(clazz);
-            PropertyDescriptor[] props = info.getPropertyDescriptors();
-            List<String> skipAttributes = tag.getSkipAttributes();
-
-            //iterate over class fields
-            for(int i = 0; i < props.length; ++i) {
-                PropertyDescriptor prop = props[i];
-                Method writeMethod = prop.getWriteMethod();
-
-                //make sure it is public
-                if(writeMethod != null && Modifier.isPublic(writeMethod.getModifiers())) {
-                    //can't use the genertic getAnnotation 'cause the class it not on this jar
-                    Annotation annotation = getAnnotation(TAG_ATTRIBUTE, writeMethod.getAnnotations());
-                    if(annotation != null && !skipAttributes.contains(prop.getName())) {
-                        Map<String, Object> values = getValues(annotation);
-                        //create tag
-                        TagAttribute attribute = new TagAttribute();
-                        values.put("name", prop.getName());
-                        populateTagAttributes(attribute, values);
+    	TypeElement type = processingEnv.getElementUtils().getTypeElement(tag.getDeclaredType());
+    	List<String> skipAttributes = tag.getSkipAttributes();
+    	while (type !=null && !(type instanceof NoType) && getAnnotation(type, TAG_SKIP_HIERARCHY) == null) {
+    		Tag parentTag = tags.get(type.getQualifiedName().toString());
+            // copy parent annotations to this tag
+            if(parentTag != null) {
+                for(TagAttribute attribute : parentTag.getAttributes()) {
+                    if(!skipAttributes.contains(attribute.getName())){
                         tag.addTagAttribute(attribute);
                     }
                 }
-
+            } else {
+                // Maybe the parent class is already compiled
+                addTagAttributesFromParent(tag, type);
             }
-        } catch(Exception e) {
-            throw new RuntimeException(e);
-        }
+            type = (TypeElement) processingEnv.getTypeUtils().asElement(type.getSuperclass());
+    	}
     }
 
-    private Annotation getAnnotation(String typeName, Annotation[] annotations) {
-        for(int i = 0; i < annotations.length; i++) {
-            if(annotations[i].annotationType().getName().equals(typeName))
-                return annotations[i];
-        }
+    private void addTagAttributesFromParent(Tag tag, TypeElement type) {
+    	for (ExecutableElement method : ElementFilter.methodsIn(processingEnv.getElementUtils().getAllMembers(type))) {
+    		AnnotationMirror annotation = getAnnotation(method, TAG_ATTRIBUTE);
+			if (method.getModifiers().contains(Modifier.PUBLIC) && annotation != null) {
+				String name = String.valueOf(Character.toLowerCase(method.getSimpleName()
+	                    .charAt(3)))
+	                    + method.getSimpleName().subSequence(4, method.getSimpleName().length());
+    			if (!tag.getSkipAttributes().contains(name)) {
+    				Map<String, Object> values = new HashMap<>();
+    				for (Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : processingEnv.getElementUtils().getElementValuesWithDefaults(annotation).entrySet()) {
+    					values.put(entry.getKey().getSimpleName().toString(), entry.getValue().getValue());
+    				}
+    				TagAttribute attribute = new TagAttribute();
+                    populateTagAttributes(attribute, values);
+                    attribute.setName(name);
+                    tag.addTagAttribute(attribute);
+    			}
+    		}
+    	}
+    }
+
+    private AnnotationMirror getAnnotation(javax.lang.model.element.Element element, String annotationName) {
+    	TypeElement annotation = processingEnv.getElementUtils().getTypeElement(annotationName);
+    	if (element != null && element.getAnnotationMirrors() != null) {
+    	for (AnnotationMirror mirror : element.getAnnotationMirrors()) {
+    		if (mirror.getAnnotationType().asElement().equals(annotation)) {
+    			return mirror;
+    		}
+    	}
+    	}
         return null;
     }
 
@@ -288,16 +256,12 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
             for (Tag tag : tags.values()) {
                 if (tag.isInclude()) {
                     // model
-                    HashMap<String, Tag> root = new HashMap<String, Tag>();
+                    HashMap<String, Tag> root = new HashMap<>();
                     root.put("tag", tag);
 
-                    // save file
-                    BufferedWriter writer = new BufferedWriter(new FileWriter(
-                            new File(rootDir, tag.getName() + ".html")));
-                    try {
-                        template.process(root, writer);
-                    } finally {
-                        writer.close();
+                    try (BufferedWriter writer = new BufferedWriter(new FileWriter(
+                            new File(rootDir, tag.getName() + ".html")))){
+                    	template.process(root, writer);
                     }
                 }
             }
@@ -373,10 +337,10 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
         // there is a bug in the 1.5 apt implementation:
         // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6258929
         // this is a hack-around
-        if (environment.getOptions().containsKey(name))
-            return environment.getOptions().get(name);
-
-        for (Map.Entry<String, String> entry : environment.getOptions()
+        if (processingEnv.getOptions().containsKey(name)){
+            return processingEnv.getOptions().get(name);
+        }
+        for (Map.Entry<String, String> entry : processingEnv.getOptions()
                 .entrySet()) {
             String key = entry.getKey();
             String[] splitted = key.split("=");
@@ -386,7 +350,7 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
         return null;
     }
 
-    private void createElement(Document doc, Element tagLibElement, Tag tag) {
+    private static void createElement(Document doc, Element tagLibElement, Tag tag) {
         Element tagElement = doc.createElement("tag");
         tagLibElement.appendChild(tagElement);
         appendTextNode(doc, tagElement, "description", tag.getDescription(),
@@ -405,8 +369,7 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
         appendTextNode(doc, tagElement, "dynamic-attributes", String.valueOf(tag.isAllowDynamicAttributes()), false);
     }
 
-    private void createElement(Document doc, Element tagElement,
-            TagAttribute attribute) {
+    private static void createElement(Document doc, Element tagElement, TagAttribute attribute) {
         Element attributeElement = doc.createElement("attribute");
         tagElement.appendChild(attributeElement);
         appendTextNode(doc, attributeElement, "description", attribute
@@ -419,7 +382,7 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
                 .valueOf(attribute.isRtexprvalue()), false);
     }
 
-    private void appendTextNode(Document doc, Element element, String name,
+    private static void appendTextNode(Document doc, Element element, String name,
             String text, boolean cdata) {
         Text textNode = cdata ? doc.createCDATASection(text) : doc
                 .createTextNode(text);
@@ -436,67 +399,22 @@ public class TagAnnotationProcessor implements AnnotationProcessor {
      *            The type of the annotation
      * @return name->value map of annotation values
      */
-    private Map<String, Object> getValues(Declaration declaration,
-            AnnotationTypeDeclaration type) {
-        Map<String, Object> values = new TreeMap<String, Object>();
-        Collection<AnnotationMirror> annotations = declaration
+    private Map<String, Object> getValues(javax.lang.model.element.Element element, TypeElement type) {
+        Map<String, Object> values = new TreeMap<>();
+        Collection<? extends AnnotationMirror> annotations = element
                 .getAnnotationMirrors();
         // iterate over the mirrors.
 
         for (AnnotationMirror mirror : annotations) {
             // if the mirror in this iteration is for our note declaration...
-            if (mirror.getAnnotationType().getDeclaration().equals(type)) {
-                for (AnnotationTypeElementDeclaration annotationType : mirror
-                        .getElementValues().keySet()) {
-                    Object value = mirror.getElementValues()
-                            .get(annotationType).getValue();
-                    Object defaultValue = annotationType.getDefaultValue();
-                    values.put(annotationType.getSimpleName(),
-                            value != null ? value : defaultValue);
+            if (mirror.getAnnotationType().asElement().equals(type)) {
+                for (Entry<? extends ExecutableElement, ? extends AnnotationValue> elementEntry : processingEnv.getElementUtils().getElementValuesWithDefaults(mirror).entrySet()) {
+                    values.put(elementEntry.getKey().getSimpleName().toString(), elementEntry.getValue().getValue());
                 }
             }
         }
 
-        // find default values...painful
-        for (AnnotationTypeElementDeclaration annotationType : type
-                .getMethods()) {
-            AnnotationValue value = annotationType.getDefaultValue();
-            if (value != null) {
-                String name = annotationType.getSimpleName();
-                if (!values.containsKey(name))
-                    values.put(name, value.getValue());
-            }
-        }
-
         return values;
     }
 
-    /**
-     * Get values of annotation
-     *
-     * @param annotation The annotation
-     * @return name->value map of annotation values
-     * @throws IntrospectionException
-     * @throws InvocationTargetException
-     * @throws IllegalAccessException
-     * @throws IllegalArgumentException
-     */
-    private  Map<String, Object> getValues(Annotation annotation) throws IntrospectionException, IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-        Map<String, Object> values = new TreeMap<String, Object>();
-        //if the tag classes were on this project we could just cast to the right type
-        //but they are needed on core
-        Class annotationType = annotation.annotationType();
-
-        Method[] methods = annotationType.getMethods();
-        //iterate over class fields
-        for(int i = 0; i < methods.length; ++i) {
-            Method method = methods[i];
-            if(method != null && method.getParameterTypes().length == 0) {
-                Object value = method.invoke(annotation, new Object[0]);
-                values.put(method.getName(), value);
-            }
-        }
-
-        return values;
-    }
 }
