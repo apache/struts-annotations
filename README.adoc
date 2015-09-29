@@ -1,2 +1,4 @@
 # Struts Annotations Project
 
+This project is used by the Apache Struts 2 project to generate taglib info and generate tags' documentation
+based on custom annotations.

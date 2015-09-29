@@ -13,7 +13,7 @@
   <name>Struts Annotations</name>
   <url>http://struts.apache.org</url>
   <description>
-    struts-annotations adds apt generation support for struts based annotated projects,
+    struts-annotations adds annotations processor support for struts based annotated projects,
     such as TLD and documentation generation from annotated component classes as used in struts2
   </description>
 
