@@ -19,10 +19,9 @@
     </description>
 
     <scm>
-        <connection>scm:git:git://git.apache.org/struts-annotations.git</connection>
-        <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/struts-annotations.git
-        </developerConnection>
-        <url>http://git.apache.org/struts-annotations.git</url>
+        <connection>scm:git:https://gitbox.apache.org/repos/asf/struts-annotations.git</connection>
+        <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/struts-annotations.git</developerConnection>
+        <url>https://github.com/apache/struts-annotations.git</url>
         <tag>HEAD</tag>
     </scm>
 
