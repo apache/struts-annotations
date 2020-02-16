@@ -70,8 +70,6 @@ pipeline {
         always {
             cleanWs deleteDirs: true, patterns: [[pattern: '**/target/**', type: 'INCLUDE']]
         }
-    }
-    post {
         // If this build failed, send an email to the list.
         failure {
             script {
