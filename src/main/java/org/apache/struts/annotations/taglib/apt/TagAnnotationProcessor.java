@@ -1,6 +1,4 @@
 /*
- * $Id:  $
- *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -32,17 +30,34 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.*;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.NoType;
 import javax.lang.model.util.ElementFilter;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.*;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.*;
-import java.util.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.OutputStreamWriter;
+import java.nio.file.Files;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
 
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 @SupportedAnnotationTypes({TagAnnotationProcessor.TAG, TagAnnotationProcessor.TAG_ATTRIBUTE, TagAnnotationProcessor.TAG_SKIP_HIERARCHY})
@@ -51,7 +66,7 @@ public class TagAnnotationProcessor extends AbstractProcessor {
     public static final String TAG_ATTRIBUTE = "org.apache.struts2.views.annotations.StrutsTagAttribute";
     public static final String TAG_SKIP_HIERARCHY = "org.apache.struts2.views.annotations.StrutsTagSkipInheritance";
 
-    private Map<String, Tag> tags = new TreeMap<>();
+    private final Map<String, Tag> tags = new TreeMap<>();
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -91,7 +106,7 @@ public class TagAnnotationProcessor extends AbstractProcessor {
                 String name = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
                 Tag tag = tags.get(typeName);
                 if (tag != null) {
-                    //if it is on an abstract class, there is not tag for it at this point
+                    //if it is on an abstract class, there is no tag for it at this point
                     tags.get(typeName).addSkipAttribute(name);
                 }
             }
@@ -224,9 +239,9 @@ public class TagAnnotationProcessor extends AbstractProcessor {
 
     private void saveTemplates() {
         // freemarker configuration
-        Configuration config = new Configuration();
+        Configuration config = new Configuration(Configuration.VERSION_2_3_31);
         config.setClassForTemplateLoading(getClass(), "");
-        config.setObjectWrapper(new DefaultObjectWrapper());
+        config.setObjectWrapper(new DefaultObjectWrapper(Configuration.VERSION_2_3_31));
 
         try {
             // load template
@@ -313,11 +328,12 @@ public class TagAnnotationProcessor extends AbstractProcessor {
             File outputFile = new File(outFile);
             File parentDir = outputFile.getParentFile();
             if (!parentDir.exists()) {
-                parentDir.mkdirs();
+                if (!parentDir.mkdirs()) {
+                    throw new IllegalStateException("Cannot create folder: " + parentDir.getPath() + "!");
+                }
             }
             Source source = new DOMSource(document);
-            Result result = new StreamResult(new OutputStreamWriter(
-                    new FileOutputStream(outputFile)));
+            Result result = new StreamResult(new OutputStreamWriter(Files.newOutputStream(outputFile.toPath())));
             transformer.transform(source, result);
         } catch (Exception e) {
             // oops we cannot throw checked exceptions

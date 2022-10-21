@@ -34,9 +34,10 @@ public class Tag {
     private boolean allowDynamicAttributes;
     private boolean include = true;
     private String declaredType;
-    private Map<String, TagAttribute> attributes = new TreeMap<>();
-    private List<String> skipAttributes = new ArrayList<>();
-    
+
+    private final Map<String, TagAttribute> attributes = new TreeMap<>();
+    private final List<String> skipAttributes = new ArrayList<>();
+
     public String getDescription() {
         return description;
     }
@@ -93,7 +94,7 @@ public class Tag {
     public void setAllowDynamicAttributes(boolean allowDynamicAttributes) {
         this.allowDynamicAttributes = allowDynamicAttributes;
     }
-    
+
     public String getDeclaredType() {
         return declaredType;
     }
@@ -105,7 +106,7 @@ public class Tag {
     public List<String> getSkipAttributes() {
         return skipAttributes;
     }
-    
+
     public void addSkipAttribute(String name) {
         this.skipAttributes.add(name);
     }
