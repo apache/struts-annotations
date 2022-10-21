@@ -5,8 +5,8 @@ pipeline {
         label 'ubuntu'
     }
     tools {
-        jdk 'JDK 1.8 (latest)'
-        maven 'Maven (latest)'
+        jdk 'jdk_1.8_latest'
+        maven 'maven_3_latest'
     }
     environment {
         MAVEN_OPTS = "-Xmx1024m"
@@ -74,14 +74,21 @@ pipeline {
         failure {
             script {
                 emailext(
-                        subject: "[BUILD-FAILURE]: Job '${env.JOB_NAME} [${env.BRANCH_NAME}] [${env.BUILD_NUMBER}]'",
-                        body: """
-              BUILD-FAILURE: Job '${env.JOB_NAME} [${env.BRANCH_NAME}] [${env.BUILD_NUMBER}]':
-               
-              Check console output at "<a href="${env.BUILD_URL}">${env.JOB_NAME} [${env.BRANCH_NAME}] [${env.BUILD_NUMBER}]</a>"
-            """.stripMargin(),
                         to: "dev@struts.apache.org",
-                        recipientProviders: [[$class: 'DevelopersRecipientProvider']]
+                        recipientProviders: [[$class: 'DevelopersRecipientProvider']],
+                        from: "Mr. Jenkins <jenkins@builds.apache.org>",
+                        subject: "Jenkins job ${env.JOB_NAME}#${env.BUILD_NUMBER} failed",
+                        body: """
+There is a build failure in ${env.JOB_NAME}.
+
+Build: ${env.BUILD_URL}
+Logs: ${env.BUILD_URL}console
+Changes: ${env.BUILD_URL}changes
+
+--
+Mr. Jenkins
+Director of Continuous Integration
+"""
                 )
             }
         }
@@ -90,14 +97,21 @@ pipeline {
         unstable {
             script {
                 emailext(
-                        subject: "[BUILD-UNSTABLE]: Job '${env.JOB_NAME} [${env.BRANCH_NAME}] [${env.BUILD_NUMBER}]'",
-                        body: """
-              BUILD-UNSTABLE: Job '${env.JOB_NAME} [${env.BRANCH_NAME}] [${env.BUILD_NUMBER}]':
-               
-              Check console output at "<a href="${env.BUILD_URL}">${env.JOB_NAME} [${env.BRANCH_NAME}] [${env.BUILD_NUMBER}]</a>"
-            """.stripMargin(),
                         to: "dev@struts.apache.org",
-                        recipientProviders: [[$class: 'DevelopersRecipientProvider']]
+                        recipientProviders: [[$class: 'DevelopersRecipientProvider']],
+                        from: "Mr. Jenkins <jenkins@builds.apache.org>",
+                        subject: "Jenkins job ${env.JOB_NAME}#${env.BUILD_NUMBER} unstable",
+                        body: """
+Some tests have failed in ${env.JOB_NAME}.
+
+Build: ${env.BUILD_URL}
+Logs: ${env.BUILD_URL}console
+Changes: ${env.BUILD_URL}changes
+
+--
+Mr. Jenkins
+Director of Continuous Integration
+"""
                 )
             }
         }
@@ -106,14 +120,21 @@ pipeline {
         fixed {
             script {
                 emailext(
-                        subject: "[BUILD-STABLE]: Job '${env.JOB_NAME} [${env.BRANCH_NAME}] [${env.BUILD_NUMBER}]'",
-                        body: """
-              BUILD-STABLE: Job '${env.JOB_NAME} [${env.BRANCH_NAME}] [${env.BUILD_NUMBER}]':
-               
-              Is back to normal.
-            """.stripMargin(),
                         to: "dev@struts.apache.org",
-                        recipientProviders: [[$class: 'DevelopersRecipientProvider']]
+                        recipientProviders: [[$class: 'DevelopersRecipientProvider']],
+                        from: 'Mr. Jenkins <jenkins@builds.apache.org>',
+                        subject: "Jenkins job ${env.JOB_NAME}#${env.BUILD_NUMBER} back to normal",
+                        body: """
+The build for ${env.JOB_NAME} completed successfully and is back to normal.
+
+Build: ${env.BUILD_URL}
+Logs: ${env.BUILD_URL}console
+Changes: ${env.BUILD_URL}changes
+
+--
+Mr. Jenkins
+Director of Continuous Integration
+"""
                 )
             }
         }
