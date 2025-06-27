@@ -59,7 +59,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
+@SupportedSourceVersion(SourceVersion.RELEASE_17)
 @SupportedAnnotationTypes({TagAnnotationProcessor.TAG, TagAnnotationProcessor.TAG_ATTRIBUTE, TagAnnotationProcessor.TAG_SKIP_HIERARCHY})
 public class TagAnnotationProcessor extends AbstractProcessor {
     public static final String TAG = "org.apache.struts2.views.annotations.StrutsTag";
@@ -70,7 +70,7 @@ public class TagAnnotationProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        // make sure all paramters were set
+        // make sure all parameters were set
         checkOptions();
 
         // tags
@@ -99,8 +99,7 @@ public class TagAnnotationProcessor extends AbstractProcessor {
         //find attributes to be skipped
         for (javax.lang.model.element.Element declaration : skipDeclarations) {
             //types will be ignored when hierarchy is scanned
-            if (declaration instanceof ExecutableElement) {
-                ExecutableElement methodDeclaration = (ExecutableElement) declaration;
+            if (declaration instanceof ExecutableElement methodDeclaration) {
                 String typeName = ((TypeElement) methodDeclaration.getEnclosingElement()).getQualifiedName().toString();
                 String methodName = methodDeclaration.getSimpleName().toString();
                 String name = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
@@ -122,7 +121,7 @@ public class TagAnnotationProcessor extends AbstractProcessor {
             // create Attribute and apply values found
             TagAttribute attribute = new TagAttribute();
             String name = (String) values.get("name");
-            if (name == null || name.length() == 0) {
+            if (name == null || name.isEmpty()) {
                 // get name from method
                 String methodName = methodDeclaration.getSimpleName().toString();
                 name = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
