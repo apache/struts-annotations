@@ -13,4 +13,17 @@ notifications:
 github:
   del_branch_on_merge: true
   protected_branches:
-    master: { }
+    master: {}
+  rulesets:
+    - name: "Default Branch Protection"
+      type: branch
+      branches:
+        includes:
+          - "~DEFAULT_BRANCH"
+          - "release/*"
+        excludes: []
+      bypass_teams:
+        - "root"
+        - "struts-committers"
+      restrict_deletion: true
+      restrict_force_push: true
